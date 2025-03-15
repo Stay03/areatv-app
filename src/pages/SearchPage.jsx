@@ -1,4 +1,3 @@
-// src/pages/SearchPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,28 +11,40 @@ const SearchPage = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     // Only search if there's a query
     if (query) {
-      setLoading(true);
+      // Don't show loading indicator if it's the initial component mount
+      if (!isInitialLoad) {
+        setLoading(true);
+      }
       setError(null);
       
       apiService.searchMovies(query)
         .then((response) => {
           setSearchResults(response.data);
           setLoading(false);
+          setIsInitialLoad(false);
         })
         .catch((err) => {
           console.error('Search error:', err);
           setError('Failed to search. Please try again.');
           setLoading(false);
+          setIsInitialLoad(false);
         });
     } else {
       // Clear results if no query
       setSearchResults([]);
+      setIsInitialLoad(false);
     }
   }, [query]);
+
+  // Prefetch movie details when hovering over a result
+  const handleMovieHover = (movieId) => {
+    apiService.prefetchMovie(movieId);
+  };
 
   return (
     <motion.div 
@@ -64,20 +75,39 @@ const SearchPage = () => {
         
         {/* Search results */}
         <div className="mt-8">
-          {loading ? (
-            <div className="flex justify-center my-20">
-              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : error ? (
-            <div className="text-red-500 text-center my-10">{error}</div>
-          ) : searchResults.length > 0 ? (
-            <>
-              <h2 className="text-xl font-medium mb-4">
-                {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for "{query}"
-              </h2>
-              
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-                <AnimatePresence>
+          <AnimatePresence mode="wait">
+            {loading ? (
+              <motion.div 
+                key="loading"
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10"
+              >
+                <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </motion.div>
+            ) : error ? (
+              <motion.div 
+                key="error"
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                className="text-red-500 text-center my-10"
+              >
+                {error}
+              </motion.div>
+            ) : searchResults.length > 0 ? (
+              <motion.div
+                key="results"
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+              >
+                <h2 className="text-xl font-medium mb-4">
+                  {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for "{query}"
+                </h2>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
                   {searchResults.map((movie) => (
                     <motion.div
                       key={movie.id}
@@ -91,6 +121,7 @@ const SearchPage = () => {
                         y: -5,
                         transition: { duration: 0.2 } 
                       }}
+                      onMouseEnter={() => handleMovieHover(movie.id)}
                     >
                       <Link to={`/movie/${movie.id}`}>
                         <div className="aspect-[2/3] bg-gray-800">
@@ -118,21 +149,82 @@ const SearchPage = () => {
                       </Link>
                     </motion.div>
                   ))}
-                </AnimatePresence>
-              </div>
-            </>
-          ) : query ? (
-            <div className="text-center my-16">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-xl font-medium mb-2">No results found</h3>
-              <p className="text-gray-400">Try different keywords or check for typos</p>
-            </div>
-          ) : (
-            <div className="text-center my-16">
-              <h3 className="text-xl font-medium mb-2">Start typing to search</h3>
-              <p className="text-gray-400">Search for movies by title, actors, directors, or genres</p>
-            </div>
-          )}
+                </div>
+              </motion.div>
+            ) : query ? (
+              <motion.div 
+                key="no-results"
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                className="text-center my-16"
+              >
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-xl font-medium mb-2">No results found</h3>
+                <p className="text-gray-400">Try different keywords or check for typos</p>
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="start-search"
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                className="text-center my-16"
+              >
+                <h3 className="text-xl text-gray-500 font-medium mb-2">Start typing to search</h3>
+                
+                {/* areaTV Benefits */}
+                <div className="mt-12">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-6 max-w-3xl mx-auto">
+                    <div className="flex flex-col items-center">
+                      <div className="mb-3 text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-500 font-medium">Free</p>
+                    </div>
+                    
+                    <div className="flex flex-col items-center">
+                      <div className="mb-3 text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-500 font-medium">HD Content</p>
+                    </div>
+                    
+                    <div className="flex flex-col items-center">
+                      <div className="mb-3 text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-500 font-medium">No Buffering</p>
+                    </div>
+                    
+                    <div className="flex flex-col items-center">
+                      <div className="mb-3 text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-500 font-medium">No Ads</p>
+                    </div>
+                    
+                    <div className="flex flex-col items-center">
+                      <div className="mb-3 text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-500 font-medium">No Bullshit</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>

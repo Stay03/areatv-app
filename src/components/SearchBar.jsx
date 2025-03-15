@@ -24,7 +24,7 @@ const SearchBar = ({ isExpanded = false, autoFocus = false }) => {
     <motion.form 
       className={`relative ${isExpanded ? 'w-full' : 'w-10 md:w-64'}`}
       initial={isExpanded ? { opacity: 1, width: '100%' } : { opacity: 0.9, width: '5.5rem' }}
-      animate={isExpanded ? { opacity: 1, width: '100%' } : { opacity: 0.9, width: '20.5rem', transition: { duration: 0.2 } }}
+      animate={isExpanded ? { opacity: 1, width: '100%' } : { opacity: 0.9, width: '20.5rem', transition: { duration: 0.8 } }}
       whileFocus={{ opacity: 1 }}
       onSubmit={handleSubmit}
     >

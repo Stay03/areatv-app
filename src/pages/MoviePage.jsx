@@ -4,6 +4,82 @@ import { motion } from 'framer-motion';
 import apiService from '../services/apiService';
 import SearchBar from '../components/SearchBar';
 
+// Skeleton loader component
+const MovieSkeleton = () => {
+  return (
+    <div className="min-h-screen animate-pulse">
+      {/* Header area with navigation */}
+      <div className="absolute top-4 left-0 right-0 z-20 p-2 text-white flex items-center justify-between px-4">
+        <div className="p-2 bg-gray-700/50 rounded-full h-10 w-10"></div>
+        <div className="h-10 w-64 bg-gray-700/50 rounded-full"></div>
+      </div>
+
+      {/* Backdrop skeleton */}
+      <div className="relative w-full h-[50vh] md:h-[70vh] bg-gray-800/70"></div>
+
+      {/* Movie details area */}
+      <div className="px-4 md:px-8 py-6 relative z-10 -mt-20">
+        <div className="flex flex-col md:flex-row">
+          {/* Poster skeleton */}
+          <div className="md:w-1/3 lg:w-1/4 flex-shrink-0">
+            <div className="w-full aspect-[2/3] bg-gray-700/70 rounded-lg"></div>
+          </div>
+          
+          {/* Info skeleton */}
+          <div className="md:w-2/3 lg:w-3/4 md:pl-8 mt-6 md:mt-0">
+            {/* Title */}
+            <div className="h-10 bg-gray-700/70 rounded-md w-3/4 mb-4"></div>
+            
+            {/* Rating & year */}
+            <div className="flex gap-2 mb-4">
+              <div className="h-6 w-24 bg-gray-700/70 rounded-full"></div>
+              <div className="h-6 w-16 bg-gray-700/70 rounded-full"></div>
+              <div className="h-6 w-20 bg-gray-700/70 rounded-full"></div>
+            </div>
+            
+            {/* Genres */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-8 w-20 bg-gray-700/70 rounded-full"></div>
+              ))}
+            </div>
+            
+            {/* Description */}
+            <div className="space-y-2 mb-6">
+              <div className="h-4 bg-gray-700/70 rounded w-full"></div>
+              <div className="h-4 bg-gray-700/70 rounded w-full"></div>
+              <div className="h-4 bg-gray-700/70 rounded w-5/6"></div>
+              <div className="h-4 bg-gray-700/70 rounded w-4/6"></div>
+            </div>
+            
+            {/* Video quality selector */}
+            <div className="mb-6">
+              <div className="h-8 w-48 bg-gray-700/70 rounded mb-3"></div>
+              <div className="h-14 w-80 bg-gray-700/70 rounded-md"></div>
+            </div>
+            
+            {/* Director */}
+            <div className="mb-6">
+              <div className="h-8 w-32 bg-gray-700/70 rounded mb-2"></div>
+              <div className="h-6 w-48 bg-gray-700/70 rounded"></div>
+            </div>
+            
+            {/* Cast */}
+            <div>
+              <div className="h-8 w-24 bg-gray-700/70 rounded mb-2"></div>
+              <div className="flex flex-wrap gap-2">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <div key={i} className="h-8 w-28 bg-gray-700/70 rounded-full"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const MoviePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -17,6 +93,10 @@ const MoviePage = () => {
   useEffect(() => {
     const fetchMovieDetails = async () => {
       try {
+        // Reset state when navigating to a different movie
+        setLoading(true);
+        setMovie(null);
+        
         const movieData = await apiService.getMovieDetails(id);
         setMovie(movieData);
         
@@ -70,12 +150,9 @@ const MoviePage = () => {
     return `${sizeInMB} MB`;
   };
 
+  // If loading, show skeleton instead of spinner
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <MovieSkeleton />;
   }
 
   if (!movie) {
@@ -112,18 +189,18 @@ const MoviePage = () => {
       transition={{ duration: 0.5 }}
     >
       {/* Back button */}
-<div className="absolute top-4 left-0 right-0 z-20 p-2 text-white flex items-center justify-between px-4">
-  <button 
-    onClick={() => navigate('/')}
-    className="p-2"
-  >
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-    </svg>
-  </button>
-  
-  <SearchBar isExpanded={false} setIsExpanded={() => navigate('/search')} />
-</div>
+      <div className="absolute top-4 left-0 right-0 z-20 p-2 text-white flex items-center justify-between px-4">
+        <button 
+          onClick={() => navigate('/')}
+          className="p-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </button>
+        
+        <SearchBar isExpanded={false} setIsExpanded={() => navigate('/search')} />
+      </div>
 
       {/* Movie backdrop */}
       <div className="relative w-full h-[50vh] md:h-[70vh]">
@@ -218,7 +295,7 @@ const MoviePage = () => {
                     >
                       <div className="flex items-center gap-2">
                         <span className={`font-medium ${selectedQuality === quality ? 'text-[1.3rem]' : 'text-sm'}`}>{quality}</span>
-                        <span className="text-xs opacity-80">  {formatFileSize(sourceData.fileSize)}</span>
+                        <span className="text-xs opacity-80">{formatFileSize(sourceData.fileSize)}</span>
                       </div>
                       {selectedQuality === quality && (
                         <span className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-primary-light"></span>
@@ -228,23 +305,6 @@ const MoviePage = () => {
                 </div>
               </div>
             )}
-            
-            {/* Trailer button */}
-            {/* {movie.trailer && (
-              <div className="mb-6">
-                <motion.button
-                  className="px-6 py-3 border-2 border-primary bg-transparent rounded-md flex items-center justify-center"
-                  whileHover={{ scale: 1.02, backgroundColor: 'rgba(var(--color-primary), 0.1)' }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowTrailer(true)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-white font-medium">Watch Trailer</span>
-                </motion.button>
-              </div>
-            )} */}
             
             <div className="mb-6">
               <h3 className="text-xl font-semibold mb-2">Director</h3>

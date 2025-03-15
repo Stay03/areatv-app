@@ -1,3 +1,13 @@
-# https://www.robotstxt.org/robotstxt.html
+# Allow all crawlers
 User-agent: *
-Disallow:
+Allow: /
+
+# Sitemap location
+Sitemap: https://areatv.online/sitemap.xml
+
+# Disallow search results pages and user account areas
+Disallow: /search?*
+#Disallow: /account/
+#Disallow: /user/
+#Disallow: /login
+#Disallow: /signup

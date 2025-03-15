@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "areaTV",
+  "name": "areaTV - Stream Movies & TV Shows",
+  "description": "Discover and stream the latest movies and TV shows in HD quality",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,16 +11,32 @@
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "orientation": "portrait",
+  "theme_color": "#171717",
+  "background_color": "#171717",
+  "categories": ["entertainment", "video", "streaming"],
+  "screenshots": [
+    {
+      "src": "screenshots/home-screen.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "screenshots/movie-details.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg"
+    }
+  ]
 }

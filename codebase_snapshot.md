@@ -1,16 +1,138 @@
 # Codebase Documentation
 
 {
-  "Extraction Date": "2025-03-15 06:07:12",
+  "Extraction Date": "2025-03-15 09:11:14",
   "Include Paths": [
-    "src/pages/HomePage.jsx",
     "src/services/apiService.js",
-    "src/components/SearchBar.jsx",
-    "src/pages/SearchPage.jsx",
+    "src/pages/HomePage.jsx",
+    "src/pages/MoviePage.jsx",
     "src/App.js",
-    "src/pages/MoviePage.jsx"
+    "public/index.html"
   ]
 }
+
+### src/services/apiService.js
+```
+// apiService.js
+import axios from 'axios';
+import authService from './authService';
+import cacheService from './cacheService';
+
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: 'http://localhost:8000' || 'http://apimagic.xyz/areatvApi',
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+  }
+});
+
+// Add request interceptor to handle authentication
+api.interceptors.request.use(
+  async (config) => {
+    // Get the token (will generate a new one if needed)
+    const token = await authService.ensureAuth();
+    
+    // Add token to request headers
+    if (token) {
+      config.headers.Authorization = token;
+    }
+    
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// API service methods
+const apiService = {
+  // Get trending movies with caching
+  getTrendingMovies: async (limit = 20, forceRefresh = false) => {
+    const cacheKey = `trending-movies-${limit}`;
+    
+    // Return cached data if available and not forced refresh
+    if (!forceRefresh && cacheService.has(cacheKey)) {
+      return cacheService.get(cacheKey);
+    }
+    
+    try {
+      const response = await api.get(`/api/v1/movies/trending?limit=${limit}`);
+      return cacheService.set(cacheKey, response.data.data);
+    } catch (error) {
+      console.error('Error fetching trending movies:', error);
+      throw error;
+    }
+  },
+  
+  // Get movie details with caching
+  getMovieDetails: async (movieId, forceRefresh = false) => {
+    const cacheKey = `movie-${movieId}`;
+    
+    // Return cached data if available and not forced refresh
+    if (!forceRefresh && cacheService.has(cacheKey)) {
+      return cacheService.get(cacheKey);
+    }
+    
+    try {
+      const response = await api.get(`/api/v1/movies/${movieId}`);
+      return cacheService.set(cacheKey, response.data.data);
+    } catch (error) {
+      console.error(`Error fetching movie ${movieId}:`, error);
+      throw error;
+    }
+  },
+  
+  // For demonstration, get featured movies with caching
+  getFeaturedMovies: async (limit = 20, forceRefresh = false) => {
+    const cacheKey = `featured-movies-${limit}`;
+    
+    // Return cached data if available and not forced refresh
+    if (!forceRefresh && cacheService.has(cacheKey)) {
+      return cacheService.get(cacheKey);
+    }
+    
+    try {
+      const response = await api.get(`/api/v1/movies/featured?limit=${limit}`);
+      return cacheService.set(cacheKey, response.data.data);
+    } catch (error) {
+      console.error('Error fetching featured movies:', error);
+      throw error;
+    }
+  },
+
+  // Search movies with caching
+  searchMovies: async (query, limit = 20, forceRefresh = false) => {
+    const cacheKey = `search-movies-${query}-${limit}`;
+    
+    // Return cached data if available and not forced refresh
+    if (!forceRefresh && cacheService.has(cacheKey)) {
+      return cacheService.get(cacheKey);
+    }
+    
+    try {
+      const response = await api.get(`/api/v1/movies/search?query=${encodeURIComponent(query)}&limit=${limit}`);
+      return cacheService.set(cacheKey, response.data);
+    } catch (error) {
+      console.error('Error searching movies:', error);
+      throw error;
+    }
+  },
+  
+  // Prefetch a movie detail (to be used for background loading)
+  prefetchMovie: async (movieId) => {
+    try {
+      // Don't await this, let it happen in background
+      apiService.getMovieDetails(movieId, false);
+    } catch (error) {
+      // Silently fail, it's just preloading
+      console.log('Background prefetch failed:', error);
+    }
+  }
+};
+
+export default apiService;
+```
 
 ### src/pages/HomePage.jsx
 ```
@@ -399,385 +521,6 @@ const HomePage = () => {
 export default HomePage;
 ```
 
-### src/services/apiService.js
-```
-// apiService.js
-import axios from 'axios';
-import authService from './authService';
-
-// Create axios instance with default config
-const api = axios.create({
-  baseURL: 'http://localhost:8000' || 'http://apimagic.xyz/areatvApi',
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
-  }
-});
-
-// Add request interceptor to handle authentication
-api.interceptors.request.use(
-  async (config) => {
-    // Get the token (will generate a new one if needed)
-    const token = await authService.ensureAuth();
-    
-    // Add token to request headers
-    if (token) {
-      config.headers.Authorization = token;
-    }
-    
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// API service methods
-const apiService = {
-  // Get trending movies
-  getTrendingMovies: async (limit = 20) => {
-    try {
-      const response = await api.get(`/api/v1/movies/trending?limit=${limit}`);
-      return response.data.data;
-    } catch (error) {
-      console.error('Error fetching trending movies:', error);
-      throw error;
-    }
-  },
-  
-  // Get movie details
-  getMovieDetails: async (movieId) => {
-    try {
-      const response = await api.get(`/api/v1/movies/${movieId}`);
-      return response.data.data;
-    } catch (error) {
-      console.error(`Error fetching movie ${movieId}:`, error);
-      throw error;
-    }
-  },
-  
-  // For demonstration, get featured movies
-  getFeaturedMovies: async (limit = 20) => {
-    try {
-      const response = await api.get(`/api/v1/movies/featured?limit=${limit}`);
-      return response.data.data;
-    } catch (error) {
-      console.error('Error fetching featured movies:', error);
-      throw error;
-    }
-  },
-
-  // Add this method to your apiService object
-searchMovies: async (query, limit = 20) => {
-  try {
-    const response = await api.get(`/api/v1/movies/search?query=${encodeURIComponent(query)}&limit=${limit}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error searching movies:', error);
-    throw error;
-  }
-}
-};
-
-export default apiService;
-```
-
-### src/components/SearchBar.jsx
-```
-// src/components/SearchBar.jsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-
-const SearchBar = ({ isExpanded = false, autoFocus = false }) => {
-  const navigate = useNavigate();
-  const [query, setQuery] = useState('');
-  
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (query.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
-    }
-  };
-  
-  const handleFocus = () => {
-    if (!isExpanded) {
-      navigate('/search');
-    }
-  };
-  
-  return (
-    <motion.form 
-      className={`relative ${isExpanded ? 'w-full' : 'w-10 md:w-64'}`}
-      initial={isExpanded ? { opacity: 1, width: '100%' } : { opacity: 0.9, width: '5.5rem' }}
-      animate={isExpanded ? { opacity: 1, width: '100%' } : { opacity: 0.9, width: '20.5rem', transition: { duration: 0.2 } }}
-      whileFocus={{ opacity: 1 }}
-      onSubmit={handleSubmit}
-    >
-      <input
-  type="text"
-  value={query}
-  onChange={(e) => setQuery(e.target.value)}
-  onFocus={handleFocus}
-  placeholder={isExpanded ? "Search for movies, TV shows..." : ""}
-  className={`
-    bg-gray-900/80 text-white py-2 pl-10 pr-4 rounded-full w-full
-    border-2 border-red-500 focus:outline-none  focus:bg-gray-800/90
-    transition-all duration-600
-  `}
-  autoFocus={autoFocus}
-/>
-
-      <motion.div 
-        className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-        whileHover={{ scale: 1.1 }}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </motion.div>
-      {isExpanded && query && (
-        <button
-          type="button"
-          className="absolute inset-y-0 right-0 pr-3 flex items-center"
-          onClick={() => setQuery('')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 hover:text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      )}
-    </motion.form>
-  );
-};
-
-export default SearchBar;
-```
-
-### src/pages/SearchPage.jsx
-```
-// src/pages/SearchPage.jsx
-import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import apiService from '../services/apiService';
-import SearchBar from '../components/SearchBar';
-
-const SearchPage = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const query = searchParams.get('q') || '';
-  const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    // Only search if there's a query
-    if (query) {
-      setLoading(true);
-      setError(null);
-      
-      apiService.searchMovies(query)
-        .then((response) => {
-          setSearchResults(response.data);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error('Search error:', err);
-          setError('Failed to search. Please try again.');
-          setLoading(false);
-        });
-    } else {
-      // Clear results if no query
-      setSearchResults([]);
-    }
-  }, [query]);
-
-  return (
-    <motion.div 
-      className="min-h-screen py-20 px-6 md:px-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      {/* Back button */}
-      <button 
-        className="absolute top-4 left-4 z-20 p-2 text-white"
-        onClick={() => navigate(-1)}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-      </button>
-      
-      {/* Search header */}
-      <div className="max-w-4xl mx-auto mt-8">
-        <h1 className="text-3xl font-bold mb-6 text-white">Search</h1>
-        
-        {/* Expanded search bar */}
-        <div className="mb-10">
-          <SearchBar isExpanded={true} autoFocus={!query} />
-        </div>
-        
-        {/* Search results */}
-        <div className="mt-8">
-          {loading ? (
-            <div className="flex justify-center my-20">
-              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : error ? (
-            <div className="text-red-500 text-center my-10">{error}</div>
-          ) : searchResults.length > 0 ? (
-            <>
-              <h2 className="text-xl font-medium mb-4">
-                {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for "{query}"
-              </h2>
-              
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-                <AnimatePresence>
-                  {searchResults.map((movie) => (
-                    <motion.div
-                      key={movie.id}
-                      className="relative rounded-lg overflow-hidden"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3 }}
-                      whileHover={{ 
-                        scale: 1.05, 
-                        y: -5,
-                        transition: { duration: 0.2 } 
-                      }}
-                    >
-                      <Link to={`/movie/${movie.id}`}>
-                        <div className="aspect-[2/3] bg-gray-800">
-                          {movie.poster ? (
-                            <img 
-                              src={movie.poster} 
-                              alt={movie.title} 
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-500">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
-                          <h3 className="text-sm font-medium text-white">{movie.title}</h3>
-                          {movie.year && (
-                            <p className="text-xs text-gray-300">{movie.year}</p>
-                          )}
-                        </div>
-                      </Link>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </>
-          ) : query ? (
-            <div className="text-center my-16">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-xl font-medium mb-2">No results found</h3>
-              <p className="text-gray-400">Try different keywords or check for typos</p>
-            </div>
-          ) : (
-            <div className="text-center my-16">
-              <h3 className="text-xl font-medium mb-2">Start typing to search</h3>
-              <p className="text-gray-400">Search for movies by title, actors, directors, or genres</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-export default SearchPage;
-```
-
-### src/App.js
-```
-// Modify src/App.js to include the new SearchPage route
-
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
-import Preloader from './components/Preloader';
-import HomePage from './pages/HomePage';
-import MoviePage from './pages/MoviePage';
-import SearchPage from './pages/SearchPage';  // Import the new component
-import authService from './services/authService';
-
-// Create a wrapper component for AnimatePresence
-const AnimatedRoutes = () => {
-  const location = useLocation();
-  
-  return (
-    <AnimatePresence mode="wait" initial={false}>
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/movie/:id" element={<MoviePage />} />
-        <Route path="/search" element={<SearchPage />} />
-      </Routes>
-    </AnimatePresence>
-  );
-};
-
-function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [authInitialized, setAuthInitialized] = useState(false);
-  
-  useEffect(() => {
-    // Initialize authentication when app loads
-    const initAuth = async () => {
-      try {
-        await authService.ensureAuth();
-        setAuthInitialized(true);
-      } catch (error) {
-        console.error('Failed to initialize authentication:', error);
-        // Still set to true to allow app to load
-        setAuthInitialized(true);
-      }
-    };
-    
-    initAuth();
-  }, []);
-  
-  const handleLoadingComplete = () => {
-    // Only complete loading if both preloader is done and auth is initialized
-    if (authInitialized) {
-      setIsLoading(false);
-    }
-  };
-  
-  // When auth is initialized, check if preloader is already done
-  useEffect(() => {
-    if (authInitialized && !isLoading) {
-      setIsLoading(false);
-    }
-  }, [authInitialized, isLoading]);
-  
-  return (
-    <div className="min-h-screen bg-background text-white">
-      <Preloader onLoadingComplete={handleLoadingComplete} />
-      
-      {!isLoading && (
-        <Router>
-          <AnimatedRoutes />
-        </Router>
-      )}
-    </div>
-  );
-}
-
-export default App;
-```
-
 ### src/pages/MoviePage.jsx
 ```
 import React, { useState, useEffect, useRef } from 'react';
@@ -785,6 +528,82 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import apiService from '../services/apiService';
 import SearchBar from '../components/SearchBar';
+
+// Skeleton loader component
+const MovieSkeleton = () => {
+  return (
+    <div className="min-h-screen animate-pulse">
+      {/* Header area with navigation */}
+      <div className="absolute top-4 left-0 right-0 z-20 p-2 text-white flex items-center justify-between px-4">
+        <div className="p-2 bg-gray-700/50 rounded-full h-10 w-10"></div>
+        <div className="h-10 w-64 bg-gray-700/50 rounded-full"></div>
+      </div>
+
+      {/* Backdrop skeleton */}
+      <div className="relative w-full h-[50vh] md:h-[70vh] bg-gray-800/70"></div>
+
+      {/* Movie details area */}
+      <div className="px-4 md:px-8 py-6 relative z-10 -mt-20">
+        <div className="flex flex-col md:flex-row">
+          {/* Poster skeleton */}
+          <div className="md:w-1/3 lg:w-1/4 flex-shrink-0">
+            <div className="w-full aspect-[2/3] bg-gray-700/70 rounded-lg"></div>
+          </div>
+          
+          {/* Info skeleton */}
+          <div className="md:w-2/3 lg:w-3/4 md:pl-8 mt-6 md:mt-0">
+            {/* Title */}
+            <div className="h-10 bg-gray-700/70 rounded-md w-3/4 mb-4"></div>
+            
+            {/* Rating & year */}
+            <div className="flex gap-2 mb-4">
+              <div className="h-6 w-24 bg-gray-700/70 rounded-full"></div>
+              <div className="h-6 w-16 bg-gray-700/70 rounded-full"></div>
+              <div className="h-6 w-20 bg-gray-700/70 rounded-full"></div>
+            </div>
+            
+            {/* Genres */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-8 w-20 bg-gray-700/70 rounded-full"></div>
+              ))}
+            </div>
+            
+            {/* Description */}
+            <div className="space-y-2 mb-6">
+              <div className="h-4 bg-gray-700/70 rounded w-full"></div>
+              <div className="h-4 bg-gray-700/70 rounded w-full"></div>
+              <div className="h-4 bg-gray-700/70 rounded w-5/6"></div>
+              <div className="h-4 bg-gray-700/70 rounded w-4/6"></div>
+            </div>
+            
+            {/* Video quality selector */}
+            <div className="mb-6">
+              <div className="h-8 w-48 bg-gray-700/70 rounded mb-3"></div>
+              <div className="h-14 w-80 bg-gray-700/70 rounded-md"></div>
+            </div>
+            
+            {/* Director */}
+            <div className="mb-6">
+              <div className="h-8 w-32 bg-gray-700/70 rounded mb-2"></div>
+              <div className="h-6 w-48 bg-gray-700/70 rounded"></div>
+            </div>
+            
+            {/* Cast */}
+            <div>
+              <div className="h-8 w-24 bg-gray-700/70 rounded mb-2"></div>
+              <div className="flex flex-wrap gap-2">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <div key={i} className="h-8 w-28 bg-gray-700/70 rounded-full"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const MoviePage = () => {
   const { id } = useParams();
@@ -799,6 +618,10 @@ const MoviePage = () => {
   useEffect(() => {
     const fetchMovieDetails = async () => {
       try {
+        // Reset state when navigating to a different movie
+        setLoading(true);
+        setMovie(null);
+        
         const movieData = await apiService.getMovieDetails(id);
         setMovie(movieData);
         
@@ -852,12 +675,9 @@ const MoviePage = () => {
     return `${sizeInMB} MB`;
   };
 
+  // If loading, show skeleton instead of spinner
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <MovieSkeleton />;
   }
 
   if (!movie) {
@@ -894,18 +714,18 @@ const MoviePage = () => {
       transition={{ duration: 0.5 }}
     >
       {/* Back button */}
-<div className="absolute top-4 left-0 right-0 z-20 p-2 text-white flex items-center justify-between px-4">
-  <button 
-    onClick={() => navigate('/')}
-    className="p-2"
-  >
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-    </svg>
-  </button>
-  
-  <SearchBar isExpanded={false} setIsExpanded={() => navigate('/search')} />
-</div>
+      <div className="absolute top-4 left-0 right-0 z-20 p-2 text-white flex items-center justify-between px-4">
+        <button 
+          onClick={() => navigate('/')}
+          className="p-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </button>
+        
+        <SearchBar isExpanded={false} setIsExpanded={() => navigate('/search')} />
+      </div>
 
       {/* Movie backdrop */}
       <div className="relative w-full h-[50vh] md:h-[70vh]">
@@ -1000,7 +820,7 @@ const MoviePage = () => {
                     >
                       <div className="flex items-center gap-2">
                         <span className={`font-medium ${selectedQuality === quality ? 'text-[1.3rem]' : 'text-sm'}`}>{quality}</span>
-                        <span className="text-xs opacity-80">  {formatFileSize(sourceData.fileSize)}</span>
+                        <span className="text-xs opacity-80">{formatFileSize(sourceData.fileSize)}</span>
                       </div>
                       {selectedQuality === quality && (
                         <span className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-primary-light"></span>
@@ -1010,23 +830,6 @@ const MoviePage = () => {
                 </div>
               </div>
             )}
-            
-            {/* Trailer button */}
-            {/* {movie.trailer && (
-              <div className="mb-6">
-                <motion.button
-                  className="px-6 py-3 border-2 border-primary bg-transparent rounded-md flex items-center justify-center"
-                  whileHover={{ scale: 1.02, backgroundColor: 'rgba(var(--color-primary), 0.1)' }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowTrailer(true)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-white font-medium">Watch Trailer</span>
-                </motion.button>
-              </div>
-            )} */}
             
             <div className="mb-6">
               <h3 className="text-xl font-semibold mb-2">Director</h3>
@@ -1108,5 +911,131 @@ const MoviePage = () => {
 };
 
 export default MoviePage;
+```
+
+### src/App.js
+```
+// Modify src/App.js to include the new SearchPage route
+
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import Preloader from './components/Preloader';
+import HomePage from './pages/HomePage';
+import MoviePage from './pages/MoviePage';
+import SearchPage from './pages/SearchPage';  // Import the new component
+import authService from './services/authService';
+
+// Create a wrapper component for AnimatePresence
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/movie/:id" element={<MoviePage />} />
+        <Route path="/search" element={<SearchPage />} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
+
+function App() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
+  
+  useEffect(() => {
+    // Initialize authentication when app loads
+    const initAuth = async () => {
+      try {
+        await authService.ensureAuth();
+        setAuthInitialized(true);
+      } catch (error) {
+        console.error('Failed to initialize authentication:', error);
+        // Still set to true to allow app to load
+        setAuthInitialized(true);
+      }
+    };
+    
+    initAuth();
+  }, []);
+  
+  const handleLoadingComplete = () => {
+    // Only complete loading if both preloader is done and auth is initialized
+    if (authInitialized) {
+      setIsLoading(false);
+    }
+  };
+  
+  // When auth is initialized, check if preloader is already done
+  useEffect(() => {
+    if (authInitialized && !isLoading) {
+      setIsLoading(false);
+    }
+  }, [authInitialized, isLoading]);
+  
+  return (
+    <div className="min-h-screen bg-background text-white">
+      <Preloader onLoadingComplete={handleLoadingComplete} />
+      
+      {!isLoading && (
+        <Router>
+          <AnimatedRoutes />
+        </Router>
+      )}
+    </div>
+  );
+}
+
+export default App;
+```
+
+### public/index.html
+```
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>React App</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+</html>
+
 ```
 
