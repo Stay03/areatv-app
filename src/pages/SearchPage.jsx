@@ -173,8 +173,8 @@ const SearchPage = () => {
               >
                 <h3 className="text-xl text-gray-500 font-medium mb-2">Start typing to search</h3>
                 
-                {/* areaTV Benefits */}
-                <div className="mt-12">
+                {/* areaTV Benefits hide on mobile */}
+                <div className="mt-12 hidden md:block ">
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-6 max-w-3xl mx-auto">
                     <div className="flex flex-col items-center">
                       <div className="mb-3 text-gray-500">

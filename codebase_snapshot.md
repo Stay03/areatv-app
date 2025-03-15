@@ -1,13 +1,14 @@
 # Codebase Documentation
 
 {
-  "Extraction Date": "2025-03-15 09:11:14",
+  "Extraction Date": "2025-03-15 13:55:52",
   "Include Paths": [
     "src/services/apiService.js",
     "src/pages/HomePage.jsx",
     "src/pages/MoviePage.jsx",
     "src/App.js",
-    "public/index.html"
+    "public/index.html",
+    "public/manifest.json"
   ]
 }
 
@@ -20,7 +21,7 @@ import cacheService from './cacheService';
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: 'http://localhost:8000' || 'http://apimagic.xyz/areatvApi',
+  baseURL: 'http://apimagic.xyz/areatvApi',
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json'
@@ -136,12 +137,15 @@ export default apiService;
 
 ### src/pages/HomePage.jsx
 ```
+// Updated HomePage.jsx with consistent header
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import apiService from '../services/apiService';
-import SearchBar from '../components/SearchBar';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
+import Header from '../components/Header'; // Import the Header component
+
 // Movie Card Component
 const MovieCard = ({ movie }) => {
   return (
@@ -168,7 +172,6 @@ const MovieCard = ({ movie }) => {
   );
 };
 
-// Movie Row Component with Navigation Arrows
 // Movie Row Component with Navigation Arrows that fade in/out on hover
 const MovieRow = ({ title, movies }) => {
     const scrollRef = React.useRef(null);
@@ -268,8 +271,6 @@ const MovieRow = ({ title, movies }) => {
       </div>
     );
   };
-
-
   
 // Featured Movie Hero Component
 const FeaturedHero = ({ movie }) => {
@@ -466,38 +467,17 @@ const HomePage = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Header with Logo */}
-<header className="fixed top-0 left-0 right-0 p-6 z-50 bg-gradient-to-b from-background/80 to-transparent">
-  <div className="flex items-center justify-between">
-    <motion.img 
-      src="https://streamlab-demo.gentechtreedesign.co.in/streamlab-v4/wp-content/uploads/sites/4/2025/02/logo.png" 
-      alt="StreamLab" 
-      className="h-8 md:h-10"
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    />
-    
-    {/* Add the search bar */}
-    <div className="hidden md:block">
-      <SearchBar />
-    </div>
-    
-    {/* Mobile search icon */}
-    <div className="block md:hidden">
-      <motion.button
-        className="p-2 text-white"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => navigate('/search')}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </motion.button>
-    </div>
-  </div>
-</header>
+      <SEO
+        title="areaTV - Stream Movies & TV Shows Online "
+        description="Discover and stream the latest movies and TV shows in HD quality on areaTV. Your ultimate entertainment destination with a vast library of content."
+        canonical="https://areatv.online/"
+        ogType="website"
+        ogImage="https://areatv.online/og-image.jpg"
+        ogUrl="https://areatv.online/"
+      />
+      
+      {/* Use the consistent Header component */}
+      <Header />
       
       {/* Featured Hero Movie with AnimatePresence for smooth transitions */}
       <AnimatePresence mode="wait">
@@ -523,11 +503,14 @@ export default HomePage;
 
 ### src/pages/MoviePage.jsx
 ```
+// Updated MoviePage.jsx with consistent header
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import apiService from '../services/apiService';
-import SearchBar from '../components/SearchBar';
+import SEO from '../components/SEO';
+import { generateMovieSchema, addSchemaToHead } from '../utils/schemaMarkup';
+import Header from '../components/Header'; // Import the Header component
 
 // Skeleton loader component
 const MovieSkeleton = () => {
@@ -642,6 +625,22 @@ const MoviePage = () => {
     fetchMovieDetails();
   }, [id]);
 
+  useEffect(() => {
+    if (movie) {
+      // Generate and add schema markup
+      const schemaObj = generateMovieSchema(movie);
+      addSchemaToHead(schemaObj);
+    }
+    
+    // Cleanup when component unmounts
+    return () => {
+      const existingSchema = document.querySelector('script[data-schema="movie"]');
+      if (existingSchema) {
+        existingSchema.remove();
+      }
+    };
+  }, [movie]);
+
   // Handle full screen video
   const openFullscreenVideo = () => {
     if (!selectedQuality || !movie.video_sources[selectedQuality]) return;
@@ -713,19 +712,19 @@ const MoviePage = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Back button */}
-      <div className="absolute top-4 left-0 right-0 z-20 p-2 text-white flex items-center justify-between px-4">
-        <button 
-          onClick={() => navigate('/')}
-          className="p-2"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-        </button>
-        
-        <SearchBar isExpanded={false} setIsExpanded={() => navigate('/search')} />
-      </div>
+      {movie && (
+        <SEO
+          title={`${movie.title} (${movie.year}) - areaTV`}
+          description={movie.description.substring(0, 160)}
+          canonical={`https://areatv.online/movie/${movie.id}`}
+          ogType="video.movie"
+          ogImage={movie.poster}
+          ogUrl={`https://areatv.online/movie/${movie.id}`}
+        />
+      )}
+      
+      {/* Use the consistent Header component */}
+      <Header />
 
       {/* Movie backdrop */}
       <div className="relative w-full h-[50vh] md:h-[70vh]">
@@ -763,13 +762,13 @@ const MoviePage = () => {
       <div className="px-4 md:px-8 py-6 relative z-10 -mt-20">
         <div className="flex flex-col md:flex-row">
           {/* Movie poster */}
-          <div className="md:w-1/3 lg:w-1/4 flex-shrink-0">
+          {/* <div className=" w-1/2 md:w-1/3 lg:w-1/4 flex-shrink-0">
             <img 
               src={movie.poster} 
               alt={movie.title} 
               className="w-full rounded-lg shadow-lg"
             />
-          </div>
+          </div> */}
           
           {/* Movie info */}
           <div className="md:w-2/3 lg:w-3/4 md:pl-8 mt-6 md:mt-0">
@@ -915,15 +914,13 @@ export default MoviePage;
 
 ### src/App.js
 ```
-// Modify src/App.js to include the new SearchPage route
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Preloader from './components/Preloader';
 import HomePage from './pages/HomePage';
 import MoviePage from './pages/MoviePage';
-import SearchPage from './pages/SearchPage';  // Import the new component
+import SearchPage from './pages/SearchPage';
 import authService from './services/authService';
 
 // Create a wrapper component for AnimatePresence
@@ -999,43 +996,130 @@ export default App;
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
+    <meta name="theme-color" content="#171717" />
+    
+    <!-- Primary Meta Tags -->
+    <title>areaTV - Stream Movies & TV Shows Online</title>
+    <meta name="title" content="areaTV - Stream Movies & TV Shows Online">
+    <meta name="description" content="Discover and stream the latest movies and TV shows in HD quality on areaTV. Your ultimate entertainment destination with a vast library of content." />
+    <meta name="keywords" content="streaming, movies, TV shows, watch online, HD movies, entertainment" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://areatv.online" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://areatv.online/" />
+    <meta property="og:title" content="areaTV - Stream Movies & TV Shows Online" />
+    <meta property="og:description" content="Discover and stream the latest movies and TV shows in HD quality on areaTV. Your ultimate entertainment destination with a vast library of content." />
+    <meta property="og:image" content="https://areatv.online/og-image.jpg" />
+    <meta property="og:site_name" content="areaTV" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://areatv.online/" />
+    <meta property="twitter:title" content="areaTV - Stream Movies & TV Shows Online" />
+    <meta property="twitter:description" content="Discover and stream the latest movies and TV shows in HD quality on areaTV. Your ultimate entertainment destination with a vast library of content." />
+    <meta property="twitter:image" content="https://areatv.online/twitter-image.jpg" />
+    
+    <!-- Favicon and App Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/favicon-16x16.png" />
+    <link rel="mask-icon" href="%PUBLIC_URL%/safari-pinned-tab.svg" color="#e50914" />
+    <meta name="msapplication-TileColor" content="#171717" />
+    
+    <!-- PWA Support -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
+    <meta name="application-name" content="areaTV" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="areaTV" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- Preconnect to API domain for performance -->
+    <link rel="preconnect" href="http://apimagic.xyz" />
+    
+    <!-- Structured Data / JSON-LD -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "areaTV",
+        "url": "https://areatv.online",
+        "description": "Stream movies and TV shows online in HD quality",
+        "applicationCategory": "EntertainmentApplication",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "ratingCount": "1024"
+        }
+      }
+    </script>
+    
+    <!-- Preload critical fonts -->
+    <link rel="preload" as="font" href="%PUBLIC_URL%/fonts/inter-var.woff2" type="font/woff2" crossorigin="anonymous" />
+    
+    <!-- Font stylesheets -->
+    <link href="%PUBLIC_URL%/fonts/fonts.css" rel="stylesheet" />
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <noscript>You need to enable JavaScript to run areaTV.</noscript>
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
   </body>
 </html>
+```
 
+### public/manifest.json
+```
+{
+  "short_name": "areaTV",
+  "name": "areaTV - Stream Movies & TV Shows",
+  "description": "Discover and stream the latest movies and TV shows in HD quality",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#171717",
+  "background_color": "#171717",
+  "categories": ["entertainment", "video", "streaming"],
+  "screenshots": [
+    {
+      "src": "screenshots/home-screen.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "screenshots/movie-details.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg"
+    }
+  ]
+}
 ```
 

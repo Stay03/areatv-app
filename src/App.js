@@ -1,12 +1,10 @@
-// Modify src/App.js to include the new SearchPage route
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Preloader from './components/Preloader';
 import HomePage from './pages/HomePage';
 import MoviePage from './pages/MoviePage';
-import SearchPage from './pages/SearchPage';  // Import the new component
+import SearchPage from './pages/SearchPage';
 import authService from './services/authService';
 
 // Create a wrapper component for AnimatePresence

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import logo from '../assets/appLogo.png';
 
 const Preloader = ({ onLoadingComplete }) => {
   const [loading, setLoading] = useState(true);
@@ -59,9 +60,9 @@ const Preloader = ({ onLoadingComplete }) => {
               }}
             >
               <img 
-                src="https://streamlab-demo.gentechtreedesign.co.in/streamlab-v4/wp-content/uploads/sites/4/2025/02/logo.png" 
+                src={logo}
                 alt="StreamFlix Logo" 
-                className="w-full h-auto"
+                className="w-full h-full"
               />
             </motion.div>
             

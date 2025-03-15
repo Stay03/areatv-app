@@ -1,9 +1,12 @@
+// Updated HomePage.jsx with consistent header
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import apiService from '../services/apiService';
-import SearchBar from '../components/SearchBar';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
+import Header from '../components/Header'; // Import the Header component
+
 // Movie Card Component
 const MovieCard = ({ movie }) => {
   return (
@@ -30,7 +33,6 @@ const MovieCard = ({ movie }) => {
   );
 };
 
-// Movie Row Component with Navigation Arrows
 // Movie Row Component with Navigation Arrows that fade in/out on hover
 const MovieRow = ({ title, movies }) => {
     const scrollRef = React.useRef(null);
@@ -130,8 +132,6 @@ const MovieRow = ({ title, movies }) => {
       </div>
     );
   };
-
-
   
 // Featured Movie Hero Component
 const FeaturedHero = ({ movie }) => {
@@ -328,38 +328,17 @@ const HomePage = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Header with Logo */}
-<header className="fixed top-0 left-0 right-0 p-6 z-50 bg-gradient-to-b from-background/80 to-transparent">
-  <div className="flex items-center justify-between">
-    <motion.img 
-      src="https://streamlab-demo.gentechtreedesign.co.in/streamlab-v4/wp-content/uploads/sites/4/2025/02/logo.png" 
-      alt="StreamLab" 
-      className="h-8 md:h-10"
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    />
-    
-    {/* Add the search bar */}
-    <div className="hidden md:block">
-      <SearchBar />
-    </div>
-    
-    {/* Mobile search icon */}
-    <div className="block md:hidden">
-      <motion.button
-        className="p-2 text-white"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => navigate('/search')}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </motion.button>
-    </div>
-  </div>
-</header>
+      <SEO
+        title="areaTV - Stream Movies & TV Shows Online "
+        description="Discover and stream the latest movies and TV shows in HD quality on areaTV. Your ultimate entertainment destination with a vast library of content."
+        canonical="https://areatv.online/"
+        ogType="website"
+        ogImage="https://areatv.online/og-image.jpg"
+        ogUrl="https://areatv.online/"
+      />
+      
+      {/* Use the consistent Header component */}
+      <Header />
       
       {/* Featured Hero Movie with AnimatePresence for smooth transitions */}
       <AnimatePresence mode="wait">

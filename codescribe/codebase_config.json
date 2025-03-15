@@ -9,7 +9,8 @@
         "src/pages/HomePage.jsx",
         "src/pages/MoviePage.jsx",
         "src/App.js",
-        "public/index.html"
+        "public/index.html",
+        "public/manifest.json"
     
         
 

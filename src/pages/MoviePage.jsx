@@ -1,8 +1,11 @@
+// Updated MoviePage.jsx with consistent header
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import apiService from '../services/apiService';
-import SearchBar from '../components/SearchBar';
+import SEO from '../components/SEO';
+import { generateMovieSchema, addSchemaToHead } from '../utils/schemaMarkup';
+import Header from '../components/Header'; // Import the Header component
 
 // Skeleton loader component
 const MovieSkeleton = () => {
@@ -117,6 +120,22 @@ const MoviePage = () => {
     fetchMovieDetails();
   }, [id]);
 
+  useEffect(() => {
+    if (movie) {
+      // Generate and add schema markup
+      const schemaObj = generateMovieSchema(movie);
+      addSchemaToHead(schemaObj);
+    }
+    
+    // Cleanup when component unmounts
+    return () => {
+      const existingSchema = document.querySelector('script[data-schema="movie"]');
+      if (existingSchema) {
+        existingSchema.remove();
+      }
+    };
+  }, [movie]);
+
   // Handle full screen video
   const openFullscreenVideo = () => {
     if (!selectedQuality || !movie.video_sources[selectedQuality]) return;
@@ -188,19 +207,19 @@ const MoviePage = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Back button */}
-      <div className="absolute top-4 left-0 right-0 z-20 p-2 text-white flex items-center justify-between px-4">
-        <button 
-          onClick={() => navigate('/')}
-          className="p-2"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-        </button>
-        
-        <SearchBar isExpanded={false} setIsExpanded={() => navigate('/search')} />
-      </div>
+      {movie && (
+        <SEO
+          title={`${movie.title} (${movie.year}) - areaTV`}
+          description={movie.description.substring(0, 160)}
+          canonical={`https://areatv.online/movie/${movie.id}`}
+          ogType="video.movie"
+          ogImage={movie.poster}
+          ogUrl={`https://areatv.online/movie/${movie.id}`}
+        />
+      )}
+      
+      {/* Use the consistent Header component */}
+      <Header />
 
       {/* Movie backdrop */}
       <div className="relative w-full h-[50vh] md:h-[70vh]">
@@ -238,13 +257,13 @@ const MoviePage = () => {
       <div className="px-4 md:px-8 py-6 relative z-10 -mt-20">
         <div className="flex flex-col md:flex-row">
           {/* Movie poster */}
-          <div className="md:w-1/3 lg:w-1/4 flex-shrink-0">
+          {/* <div className=" w-1/2 md:w-1/3 lg:w-1/4 flex-shrink-0">
             <img 
               src={movie.poster} 
               alt={movie.title} 
               className="w-full rounded-lg shadow-lg"
             />
-          </div>
+          </div> */}
           
           {/* Movie info */}
           <div className="md:w-2/3 lg:w-3/4 md:pl-8 mt-6 md:mt-0">
