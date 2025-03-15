@@ -1,0 +1,22 @@
+{
+    "ignore_patterns": ["package-lock.json","README.md", ".vscode", "codescribe", "env", "venv", ".git", "codebase_snapshot.md", "node_modules", "public"],
+    "ignore_extensions": [".log", ".tmp", ".gitignore"],
+    "list_only_extensions": [".png",".jpg",".jpeg",".gif",".ico",".svg",".db",".sqlite",".pdf",".zip"],
+    "max_file_size_mb": 5,
+    "include_paths": [
+
+        "src/pages/HomePage.jsx",
+        "src/services/apiService.js",
+        "src/components/SearchBar.jsx",
+        "src/pages/SearchPage.jsx",
+        "src/App.js",
+        "src/pages/MoviePage.jsx"
+        
+
+
+        
+
+
+
+    ]
+}
