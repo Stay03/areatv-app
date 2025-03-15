@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import MoviePage from './pages/MoviePage';
 import SearchPage from './pages/SearchPage';
 import authService from './services/authService';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 // Create a wrapper component for AnimatePresence
 const AnimatedRoutes = () => {
@@ -25,6 +26,7 @@ const AnimatedRoutes = () => {
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   useEffect(() => {
     // Initialize authentication when app loads
@@ -40,6 +42,19 @@ function App() {
     };
     
     initAuth();
+    
+    // Handle online/offline status
+    const handleOnlineStatusChange = () => {
+      setIsOnline(navigator.onLine);
+    };
+    
+    window.addEventListener('online', handleOnlineStatusChange);
+    window.addEventListener('offline', handleOnlineStatusChange);
+    
+    return () => {
+      window.removeEventListener('online', handleOnlineStatusChange);
+      window.removeEventListener('offline', handleOnlineStatusChange);
+    };
   }, []);
   
   const handleLoadingComplete = () => {
@@ -63,6 +78,14 @@ function App() {
       {!isLoading && (
         <Router>
           <AnimatedRoutes />
+          <PWAInstallPrompt />
+          
+          {/* Offline notification banner */}
+          {!isOnline && (
+            <div className="fixed top-0 left-0 right-0 bg-yellow-600 text-white text-center py-2 px-4 z-50">
+              You are currently offline. Some features may be limited.
+            </div>
+          )}
         </Router>
       )}
     </div>

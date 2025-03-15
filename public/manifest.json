@@ -3,11 +3,7 @@
   "name": "areaTV - Stream Movies & TV Shows",
   "description": "Discover and stream the latest movies and TV shows in HD quality",
   "icons": [
-    {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
+   
     {
       "src": "logo192.png",
       "type": "image/png",
@@ -21,7 +17,9 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#171717",
@@ -29,14 +27,31 @@
   "categories": ["entertainment", "video", "streaming"],
   "screenshots": [
     {
-      "src": "screenshots/home-screen.jpg",
-      "sizes": "1080x1920",
+      "src": "screenshots/home-screen.png",
+      "sizes": "1290x2796",
       "type": "image/jpeg"
     },
     {
-      "src": "screenshots/movie-details.jpg",
-      "sizes": "1080x1920",
+      "src": "screenshots/movie-details.png",
+      "sizes": "1290x2796",
       "type": "image/jpeg"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Home",
+      "short_name": "Home",
+      "description": "View trending and featured movies",
+      "url": "/",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Search",
+      "short_name": "Search",
+      "description": "Search for movies",
+      "url": "/search",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
 }

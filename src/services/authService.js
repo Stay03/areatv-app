@@ -1,7 +1,7 @@
 // authService.js
 import axios from 'axios';
 
-const BASE_URL = 'http://apimagic.xyz/areatvApi';
+const BASE_URL = 'https://apimagic.xyz/areatvApi';
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'user_data';
 
